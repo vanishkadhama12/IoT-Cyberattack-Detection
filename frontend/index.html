@@ -1,0 +1,243 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IoT Cyberattack Detection</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #101827;
+            color: white;
+        }
+
+        header {
+            background: #17243a;
+            padding: 22px 35px;
+            border-bottom: 1px solid #34445d;
+        }
+
+        header h1 {
+            margin: 0;
+            color: #55d6be;
+        }
+
+        header p {
+            color: #b8c5d8;
+        }
+
+        .container {
+            max-width: 950px;
+            margin: 35px auto;
+            padding: 20px;
+        }
+
+        .card {
+            background: #1b2940;
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 22px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #c8d4e5;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #40516b;
+            border-radius: 7px;
+            background: #101827;
+            color: white;
+            font-size: 16px;
+        }
+
+        button {
+            margin-top: 22px;
+            padding: 14px 25px;
+            background: #16a994;
+            color: white;
+            border: none;
+            border-radius: 7px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background: #108674;
+        }
+
+        #result {
+            margin-top: 20px;
+            padding: 18px;
+            border-radius: 8px;
+            display: none;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .normal {
+            background: #14532d;
+            color: #bbf7d0;
+        }
+
+        .suspicious {
+            background: #7f1d1d;
+            color: #fecaca;
+        }
+
+        .error {
+            background: #78350f;
+            color: #fde68a;
+        }
+
+        footer {
+            text-align: center;
+            color: #91a0b5;
+            padding: 25px;
+        }
+
+        @media(max-width: 600px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <h1>IoT Cyberattack Detection System</h1>
+    <p>AI-Based Network Traffic Monitoring and Classification</p>
+</header>
+
+<div class="container">
+
+    <div class="card">
+        <h2>System Overview</h2>
+        <p>
+            This prototype uses a Random Forest machine-learning model
+            to classify network traffic as normal or suspicious.
+        </p>
+        <p>Model: Random Forest Classifier</p>
+        <p>Backend: FastAPI</p>
+    </div>
+
+    <div class="card">
+        <h2>Network Traffic Analysis</h2>
+        <p>Enter network traffic information below.</p>
+
+        <div class="grid">
+
+            <div>
+                <label>Packet Count</label>
+                <input type="number" id="packet_count" value="500">
+            </div>
+
+            <div>
+                <label>Bytes Sent</label>
+                <input type="number" id="bytes_sent" value="25000">
+            </div>
+
+            <div>
+                <label>Bytes Received</label>
+                <input type="number" id="bytes_received" value="1000">
+            </div>
+
+            <div>
+                <label>Connection Duration</label>
+                <input type="number" id="connection_duration"
+                       value="2.5" step="0.1">
+            </div>
+
+            <div>
+                <label>Failed Connections</label>
+                <input type="number" id="failed_connections" value="10">
+            </div>
+
+        </div>
+
+        <button onclick="detectTraffic()">Analyze Network Traffic</button>
+
+        <div id="result"></div>
+    </div>
+
+</div>
+
+<footer>
+    AI-Based IoT Cyberattack Detection System | Academic Prototype
+</footer>
+
+<script>
+async function detectTraffic() {
+
+    const resultBox = document.getElementById("result");
+
+    const data = {
+        packet_count: Number(document.getElementById("packet_count").value),
+        bytes_sent: Number(document.getElementById("bytes_sent").value),
+        bytes_received: Number(document.getElementById("bytes_received").value),
+        connection_duration: Number(document.getElementById("connection_duration").value),
+        failed_connections: Number(document.getElementById("failed_connections").value)
+    };
+
+    if (Object.values(data).some(value => !Number.isFinite(value) || value < 0)) {
+        resultBox.style.display = "block";
+        resultBox.className = "error";
+        resultBox.textContent = "Please enter valid non-negative values.";
+        return;
+    }
+
+    resultBox.style.display = "block";
+    resultBox.className = "";
+    resultBox.textContent = "Analyzing traffic...";
+
+    try {
+        const response = await fetch("http://127.0.0.1:8000/predict", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(data)
+        });
+
+        if (!response.ok) {
+            throw new Error("API returned status " + response.status);
+        }
+
+        const output = await response.json();
+
+        resultBox.className =
+            output.prediction === 1 ? "suspicious" : "normal";
+
+        resultBox.textContent =
+            "Detection Result: " + output.result;
+
+    } catch (error) {
+        resultBox.className = "error";
+        resultBox.textContent =
+            "Could not connect to API. Please check that the backend is running.";
+    }
+}
+</script>
+
+</body>
+</html>
